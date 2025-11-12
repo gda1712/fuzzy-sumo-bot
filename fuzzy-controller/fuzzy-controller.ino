@@ -8,16 +8,16 @@ constexpr uint8_t IR_LEFT_PIN = A5;
 constexpr uint8_t IR_CENTER_PIN = A6;
 constexpr uint8_t IR_RIGHT_PIN = A7;
 
-constexpr uint8_t ULTRA_LEFT_TRIGGER_PIN = 13;
-constexpr uint8_t ULTRA_LEFT_ECHO_PIN = 14;
+constexpr uint8_t ULTRA_LEFT_TRIGGER_PIN = 17;
+constexpr uint8_t ULTRA_LEFT_ECHO_PIN = 18;
 constexpr uint8_t ULTRA_FRONT_TRIGGER_PIN = 15;
 constexpr uint8_t ULTRA_FRONT_ECHO_PIN = 16;
-constexpr uint8_t ULTRA_RIGHT_TRIGGER_PIN = 17;
-constexpr uint8_t ULTRA_RIGHT_ECHO_PIN = 18;
+constexpr uint8_t ULTRA_RIGHT_TRIGGER_PIN = 13;
+constexpr uint8_t ULTRA_RIGHT_ECHO_PIN = 14;
 
 constexpr uint8_t MOTOR_LEFT_PWM_PIN = 3;
-constexpr uint8_t MOTOR_LEFT_IN1_PIN = 4;
-constexpr uint8_t MOTOR_LEFT_IN2_PIN = 5;
+constexpr uint8_t MOTOR_LEFT_IN1_PIN = 5;
+constexpr uint8_t MOTOR_LEFT_IN2_PIN = 4;
 
 constexpr uint8_t MOTOR_RIGHT_PWM_PIN = 11;
 constexpr uint8_t MOTOR_RIGHT_IN1_PIN = 6;
@@ -64,7 +64,6 @@ const MotorController::MotorPins kRightMotorPins{MOTOR_RIGHT_PWM_PIN, MOTOR_RIGH
 
 MotorController motorController(kLeftMotorPins, kRightMotorPins);
 FuzzySumoController fuzzyController;
-FuzzySumoController::Config fuzzyConfig = FuzzySumoController::Config::makeDefault();
 
 State currentState = State::CALIBRATING_WHITE;
 CalibrationAccumulator whiteCalibration{};
@@ -252,10 +251,23 @@ void runCombatIteration() {
   input.centerEdgeNorm = static_cast<float>(readNormalizedIR(IR_CENTER_PIN));
   input.rightEdgeNorm = static_cast<float>(readNormalizedIR(IR_RIGHT_PIN));
 
+  Serial.print("Ultra L: ");
+  Serial.print(input.leftDistanceCm);
+  Serial.print("  C: ");
+  Serial.print(input.frontDistanceCm);
+  Serial.print("  R: ");
+  Serial.print(input.rightDistanceCm);
+  Serial.print(" | IR L: ");
+  Serial.print(input.leftEdgeNorm);
+  Serial.print("  C: ");
+  Serial.print(input.centerEdgeNorm);
+  Serial.print("  R: ");
+  Serial.println(input.rightEdgeNorm);
   const FuzzySumoController::Output output = fuzzyController.evaluate(input);
 
   const int leftSpeed = static_cast<int>(lroundf(output.leftMotorSpeed));
   const int rightSpeed = static_cast<int>(lroundf(output.rightMotorSpeed));
+
   motorController.move(leftSpeed, rightSpeed);
 }
 
@@ -265,6 +277,7 @@ void setup() {
   for (uint8_t i = 0; i < kIrSensorCount; ++i) {
     pinMode(kIrPins[i], INPUT);
   }
+  Serial.begin(115200);
 
   pinMode(ULTRA_LEFT_TRIGGER_PIN, OUTPUT);
   pinMode(ULTRA_FRONT_TRIGGER_PIN, OUTPUT);
@@ -294,11 +307,14 @@ void setup() {
   resetCalibrationAccumulator(blackCalibration);
   calibrationWindowActive = false;
   calibrationStartMs = 0U;
-  fuzzyController.begin(fuzzyConfig);
+  const auto config = FuzzySumoController::Config::makeDefault();
+  fuzzyController.begin(config);
   enterState(State::CALIBRATING_WHITE);
 }
 
 void loop() {
+    motorController.move(200, 200);
+    return;
   digitalWrite(LED_BUILTIN, HIGH);
   
   const uint32_t nowMs = millis();

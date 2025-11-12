@@ -2,6 +2,9 @@
 
 #include <math.h>
 #include <string.h>
+#include <qlibs.h>
+
+namespace fis = qlibs::fis;
 
 namespace {
 
@@ -55,7 +58,19 @@ const qlibs::fis::rules kRules[] = {
     IF in_front_distance IS front_distance_far AND in_left_distance IS left_distance_far AND in_right_distance IS right_distance_far THEN out_left_motor IS left_motor_slow_forward AND out_right_motor IS right_motor_slow_reverse END
     FIS_RULES_END
 };
-
+/*
+const qlibs::fis::rules kRules[] = {
+  FIS_RULES_BEGIN
+  IF in_right_edge IS right_edge_danger THEN out_left_motor IS left_motor_fast_reverse AND out_right_motor IS right_motor_slow_reverse END
+  IF in_left_edge IS left_edge_danger THEN out_left_motor IS left_motor_fast_forward AND out_right_motor IS right_motor_slow_forward END
+  IF in_center_edge IS center_edge_danger THEN out_left_motor IS left_motor_fast_reverse AND out_right_motor IS right_motor_fast_reverse END
+  IF in_front_distance IS front_distance_close THEN out_left_motor IS left_motor_fast_forward AND out_right_motor IS right_motor_fast_forward END
+  IF in_right_distance IS right_distance_close THEN out_left_motor IS left_motor_fast_forward AND out_right_motor IS right_motor_slow_forward END
+  IF in_left_distance IS left_distance_close THEN out_left_motor IS left_motor_slow_forward AND out_right_motor IS right_motor_fast_forward END
+  IF in_front_distance IS front_distance_far AND in_left_distance IS left_distance_far AND in_right_distance IS right_distance_far THEN out_left_motor IS left_motor_slow_forward AND out_right_motor IS right_motor_slow_reverse END
+  FIS_RULES_END
+};
+*/
 }  // namespace
 
 FuzzySumoController::Config FuzzySumoController::Config::makeDefault() {
