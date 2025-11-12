@@ -18,20 +18,23 @@ void applyMotorPins(const MotorController::MotorPins &pins, int speed, uint8_t m
   const bool forward = limited >= 0;
   const int duty = forward ? limited : -limited;
 
-Serial.println("Applying motor pins");
-Serial.println(pins.pwmPin);
-Serial.println(clampValue(duty, 0, static_cast<int>(maxPwm)));
-Serial.println(speed);
+  if (limited == 0) {
+    digitalWrite(pins.in1Pin, LOW);
+    digitalWrite(pins.in2Pin, LOW);
+  } else if (forward) {
+    digitalWrite(pins.in1Pin, HIGH);
+    digitalWrite(pins.in2Pin, LOW);
+  } else {
     digitalWrite(pins.in1Pin, LOW);
     digitalWrite(pins.in2Pin, HIGH);
-  
+  }
 
   analogWrite(pins.pwmPin, clampValue(duty, 0, static_cast<int>(maxPwm)));
 }
 
 }  // namespace
 
-MotorController::MotorController(const MotorPins &leftPins, const MotorPins &rightPins, uint8_t standbyPin,
+MotorController::MotorController(const MotorPins &leftPins, const MotorPins &rightPins,
                                  uint8_t maxPwm)
     : leftPins_(leftPins), rightPins_(rightPins), maxPwm_(maxPwm) {}
 
@@ -48,16 +51,12 @@ void MotorController::begin() const {
 }
 
 void MotorController::move(int leftSpeed, int rightSpeed) const {
-
-  applyMotorPins(leftPins_, leftSpeed, maxPwm_);
-  applyMotorPins(rightPins_, rightSpeed, maxPwm_);
+  applyMotorPins({3,4,5}, leftSpeed, maxPwm_);
+  applyMotorPins({11,6,7}, rightSpeed, maxPwm_);
 }
 
 void MotorController::stop() const {
-  applyMotorPins(leftPins_, 0, maxPwm_);
-  applyMotorPins(rightPins_, 0, maxPwm_);
-
-  
+  applyMotorPins({3,4,5}, 0, maxPwm_);
+  applyMotorPins({11,6,7}, 0, maxPwm_);  
 }
-
 

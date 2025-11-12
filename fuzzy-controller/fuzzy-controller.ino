@@ -32,6 +32,7 @@ constexpr uint32_t kUltrasonicTimeoutUs = 25000U;
 constexpr float kUltrasonicMaxDistanceCm = 350.0f;
 constexpr uint32_t kCalibrationCaptureMs = 5000U;
 constexpr bool kButtonActiveLow = true;
+constexpr uint32_t kCalibrationBlinkIntervalMs = 200U;
 
 enum class State : uint8_t {
   CALIBRATING_WHITE = 0,
@@ -81,6 +82,8 @@ bool lastButtonReading = false;
 bool stableButtonState = false;
 bool buttonPressedEvent = false;
 uint32_t lastDebounceMs = 0U;
+bool ledState = false;
+uint32_t lastLedToggleMs = 0U;
 
 void resetCalibrationAccumulator(CalibrationAccumulator &acc) {
   for (uint8_t i = 0; i < kIrSensorCount; ++i) {
@@ -241,6 +244,25 @@ bool consumeButtonPress() {
   return true;
 }
 
+void updateCalibrationLed(uint32_t nowMs) {
+  const bool capturing =
+      (currentState == State::CALIBRATING_WHITE && calibrationWindowActive) ||
+      (currentState == State::CALIBRATING_BLACK && calibrationWindowActive);
+
+  if (capturing) {
+    if ((nowMs - lastLedToggleMs) >= kCalibrationBlinkIntervalMs) {
+      ledState = !ledState;
+      digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
+      lastLedToggleMs = nowMs;
+    }
+  } else {
+    if (!ledState) {
+      ledState = true;
+      digitalWrite(LED_BUILTIN, HIGH);
+    }
+  }
+}
+
 void runCombatIteration() {
   FuzzySumoController::Input input{};
   input.leftDistanceCm = getUltrasonicDistance(ULTRA_LEFT_TRIGGER_PIN, ULTRA_LEFT_ECHO_PIN);
@@ -313,12 +335,9 @@ void setup() {
 }
 
 void loop() {
-    motorController.move(200, 200);
-    return;
-  digitalWrite(LED_BUILTIN, HIGH);
-  
   const uint32_t nowMs = millis();
   updateButton(nowMs);
+  updateCalibrationLed(nowMs);
 
   switch (currentState) {
     case State::CALIBRATING_WHITE:
