@@ -279,6 +279,8 @@ void setup() {
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
+  pinMode(LED_BUILTIN, OUTPUT);
+
   motorController.begin();
   motorController.stop();
 
@@ -297,6 +299,8 @@ void setup() {
 }
 
 void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);
+  
   const uint32_t nowMs = millis();
   updateButton(nowMs);
 
